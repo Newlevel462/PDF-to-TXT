@@ -1,0 +1,54 @@
+import sys
+tess.pytesseract.tesseract_cmd = r'C:\Users\Tesseract-OCR\tesseract.exe'
+from PIL import Image as PImage
+import pandas as pd
+
+# convert low quality PDFs to JPGs
+
+for file in glob.iglob(os.path.join("C:/Users/PDFFiles", '*.pdf')):
+    PDF = open(file, "rb")
+    my_outfile = ".".join(file.split('.')[:-1]) + '.jpg'
+
+    with Image(filename=file, resolution=200) as page:
+        page.sequence.append(page)
+        page.save(filename=my_outfile)
+
+    t = []
+
+# extract text from JPGs and convert to single text file
+
+    for JPGfile in glob.iglob(os.path.join("C:/Users/PDFFiles", '*.jpg')):
+        img = PImage.open(JPGfile)
+        text = tess.image_to_string(img)
+
+        t.append(text)
+        sys.stdout.close()
+
+    my_outfile = "".join(JPGfile.split('.')[:-1]) + '.txt'
+    with open(my_outfile, "w") as output:
+        output.write(str(t))
+
+# delete JPGs from folder
+
+    for JPEGfile in glob.iglob(os.path.join("C:/Users/PDFFiles", '*.jpg')):
+        if JPEGfile.endswith(".jpg"):
+            os.remove(os.path.join(JPEGfile))
+
+# scan text files for keywords and return spreadsheet with boolean responses
+
+df = []
+
+for filename in glob.iglob(os.path.join("C:/Users/PDFFiles", '*.txt')):
+    str = open(filename, 'r').read()
+    df.append(
+        {
+            'Filename': filename,
+            'String': str[0:200],
+            'Re': (True if "re".upper() in str.upper() else False),
+            'Spect': (True if "spect".upper() in str.upper() else False),
+            'Walk': (True if "walk".upper() in str.upper() else False)
+        }
+    )
+
+df = pd.DataFrame(df)
+pd.DataFrame(df).to_csv('CFH.csv')
